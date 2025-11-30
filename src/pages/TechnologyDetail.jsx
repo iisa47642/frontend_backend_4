@@ -171,7 +171,7 @@ function TechnologyDetail() {
                                     bgcolor: statusOption.color,
                                     '&:hover': { bgcolor: statusOption.color, opacity: 0.9 },
                                 }),
-                                ...( currentTech.status !== statusOption.key && {
+                                ...(currentTech.status !== statusOption.key && {
                                     borderColor: statusOption.color,
                                     color: statusOption.color,
                                     '&:hover': { 
