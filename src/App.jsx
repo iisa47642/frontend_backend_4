@@ -60,7 +60,7 @@ function App() {
     return (
         <CustomThemeProvider>
             <CssBaseline />
-            <Router basename='frontend_and_backend_practice_react'>
+            <Router basename='frontend_backend_4'>
                 <Navigation 
                     isLoggedIn={authStatus} 
                     username={currentUser} 
