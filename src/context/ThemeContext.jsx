@@ -1,50 +1,111 @@
 // src/context/ThemeContext.js
-import React, { createContext, useState, useEffect } from 'react';
+import { useState } from 'react';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
+import { ThemeContext } from './themeContextDef';
 
-export const ThemeContext = createContext();
+// Получаем начальное значение из localStorage синхронно
+const getInitialTheme = () => {
+    const savedTheme = localStorage.getItem('theme');
+    return savedTheme === 'dark';
+};
+
+export { ThemeContext };
 
 export const CustomThemeProvider = ({ children }) => {
-    const [isDarkMode, setIsDarkMode] = useState(false);
+    const [darkModeEnabled, setDarkModeEnabled] = useState(getInitialTheme);
 
-    // Загружаем тему из localStorage при загрузке
-    useEffect(() => {
-        const savedTheme = localStorage.getItem('theme');
-        if (savedTheme === 'dark') {
-            setIsDarkMode(true);
-        }
-    }, []);
-
-    const toggleTheme = () => {
-        setIsDarkMode(prev => {
-            const newTheme = !prev;
-            localStorage.setItem('theme', newTheme ? 'dark' : 'light');
-            return newTheme;
+    const switchTheme = () => {
+        setDarkModeEnabled(currentMode => {
+            const updatedMode = !currentMode;
+            localStorage.setItem('theme', updatedMode ? 'dark' : 'light');
+            return updatedMode;
         });
     };
 
-    const theme = createTheme({
+    const appTheme = createTheme({
         palette: {
-            mode: isDarkMode ? 'dark' : 'light',
+            mode: darkModeEnabled ? 'dark' : 'light',
             primary: {
-                main: '#0ea5a4',
+                main: '#7c3aed',
+                light: '#a78bfa',
+                dark: '#5b21b6',
             },
             secondary: {
-                main: '#089191',
+                main: '#ec4899',
+                light: '#f472b6',
+                dark: '#db2777',
             },
             background: {
-                default: isDarkMode ? '#121212' : '#f5f5f5',
-                paper: isDarkMode ? '#1e1e1e' : '#ffffff',
+                default: darkModeEnabled ? '#0f0f23' : '#faf5ff',
+                paper: darkModeEnabled ? '#1a1a2e' : '#ffffff',
+            },
+            success: {
+                main: '#10b981',
+            },
+            warning: {
+                main: '#f59e0b',
+            },
+            error: {
+                main: '#ef4444',
             },
         },
         typography: {
-            fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif',
+            fontFamily: '"Poppins", "Inter", "Segoe UI", "Roboto", "Helvetica Neue", Arial, sans-serif',
+            h1: {
+                fontWeight: 700,
+            },
+            h2: {
+                fontWeight: 600,
+            },
+            h3: {
+                fontWeight: 600,
+            },
+            h4: {
+                fontWeight: 600,
+            },
+            h5: {
+                fontWeight: 500,
+            },
+            h6: {
+                fontWeight: 500,
+            },
+        },
+        shape: {
+            borderRadius: 12,
+        },
+        components: {
+            MuiCard: {
+                styleOverrides: {
+                    root: {
+                        borderRadius: 16,
+                        boxShadow: darkModeEnabled 
+                            ? '0 4px 20px rgba(0, 0, 0, 0.4)' 
+                            : '0 4px 20px rgba(124, 58, 237, 0.1)',
+                    },
+                },
+            },
+            MuiButton: {
+                styleOverrides: {
+                    root: {
+                        borderRadius: 10,
+                        textTransform: 'none',
+                        fontWeight: 500,
+                    },
+                },
+            },
+            MuiPaper: {
+                styleOverrides: {
+                    root: {
+                        borderRadius: 16,
+                    },
+                },
+            },
         },
     });
 
     return (
-        <ThemeContext.Provider value={{ isDarkMode, toggleTheme }}>
-            <ThemeProvider theme={theme}>
+        <ThemeContext.Provider value={{ isDarkMode: darkModeEnabled, toggleTheme: switchTheme }}>
+            <ThemeProvider theme={appTheme}>
                 {children}
             </ThemeProvider>
         </ThemeContext.Provider>

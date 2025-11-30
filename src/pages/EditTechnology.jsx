@@ -4,51 +4,68 @@ import { useParams, useNavigate } from 'react-router-dom';
 import {
   Container,
   Typography,
-  Alert
+  Box,
 } from '@mui/material';
 import TechnologyForm from '../components/TechnologyForm';
 import useTechnologies from '../hooks/useTechnologies';
 
 function EditTechnology() {
-    const { id } = useParams();
-    const navigate = useNavigate();
+    const { id: techId } = useParams();
+    const routerNavigation = useNavigate();
     const { technologies, setTechnologies } = useTechnologies();
 
-    const techToEdit = technologies.find(t => t.id === Number(id));
+    const targetTech = technologies.find(item => item.id === Number(techId));
 
     useEffect(() => {
-        if (!techToEdit) {
-            alert('Технология не найдена');
-            navigate('/technologies');
+        if (!targetTech) {
+            alert('Запись не найдена в каталоге');
+            routerNavigation('/technologies');
         }
-    }, [techToEdit, navigate]);
+    }, [targetTech, routerNavigation]);
 
-    const handleSave = (updatedData) => {
-        const updatedTech = {
-            ...techToEdit,
-            ...updatedData,
-            id: techToEdit.id, // сохраняем id
+    const applyChanges = (modifiedData) => {
+        const updatedEntry = {
+            ...targetTech,
+            ...modifiedData,
+            id: targetTech.id,
         };
-        const updatedList = technologies.map(t => t.id === Number(id) ? updatedTech : t);
-        setTechnologies(updatedList);
-        navigate('/technologies');
+        const refreshedList = technologies.map(item => 
+            item.id === Number(techId) ? updatedEntry : item
+        );
+        setTechnologies(refreshedList);
+        routerNavigation('/technologies');
     };
 
-    const handleCancel = () => {
-        navigate('/technologies');
+    const discardChanges = () => {
+        routerNavigation('/technologies');
     };
 
-    if (!techToEdit) return null;
+    if (!targetTech) return null;
 
     return (
         <Container maxWidth="lg" sx={{ py: 4 }}>
-            <Typography variant="h4" component="h1" gutterBottom>
-                Редактирование технологии
-            </Typography>
+            <Box sx={{ mb: 4 }}>
+                <Typography 
+                    variant="h3" 
+                    sx={{ 
+                        fontWeight: 700,
+                        mb: 1,
+                        background: 'linear-gradient(135deg, #7c3aed, #ec4899)',
+                        backgroundClip: 'text',
+                        WebkitBackgroundClip: 'text',
+                        color: 'transparent',
+                    }}
+                >
+                    Редактирование
+                </Typography>
+                <Typography variant="body1" color="text.secondary">
+                    Изменение записи: {targetTech.title}
+                </Typography>
+            </Box>
             <TechnologyForm
-                onSave={handleSave}
-                onCancel={handleCancel}
-                initialData={techToEdit}
+                onSave={applyChanges}
+                onCancel={discardChanges}
+                initialData={targetTech}
             />
         </Container>
     );

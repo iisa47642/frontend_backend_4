@@ -1,5 +1,5 @@
 // src/components/TechnologyForm.jsx
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import {
   Box,
   TextField,
@@ -15,8 +15,18 @@ import {
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 
+// Валидация URL
+const checkUrlFormat = (urlString) => {
+    try {
+        new URL(urlString);
+        return true;
+    } catch {
+        return false;
+    }
+};
+
 function TechnologyForm({ onSave, onCancel, initialData = {} }) {
-    const [formData, setFormData] = useState({
+    const [formFields, setFormFields] = useState({
         title: initialData.title || '',
         description: initialData.description || '',
         category: initialData.category || 'frontend',
@@ -27,162 +37,173 @@ function TechnologyForm({ onSave, onCancel, initialData = {} }) {
             : ['']
     });
 
-    const [errors, setErrors] = useState({});
-    const [isFormValid, setIsFormValid] = useState(false);
+    // Валидация с useMemo вместо useEffect + useState
+    const validationResult = useMemo(() => {
+        const fieldErrors = {};
 
-    const validateForm = () => {
-        const newErrors = {};
-
-        if (!formData.title.trim()) {
-            newErrors.title = 'Название технологии обязательно';
-        } else if (formData.title.trim().length < 2) {
-            newErrors.title = 'Название должно содержать минимум 2 символа';
-        } else if (formData.title.trim().length > 50) {
-            newErrors.title = 'Название не должно превышать 50 символов';
+        // Проверка названия
+        const trimmedTitle = formFields.title.trim();
+        if (!trimmedTitle) {
+            fieldErrors.title = 'Укажите название технологии';
+        } else if (trimmedTitle.length < 2) {
+            fieldErrors.title = 'Минимум 2 символа';
+        } else if (trimmedTitle.length > 50) {
+            fieldErrors.title = 'Максимум 50 символов';
         }
 
-        if (!formData.description.trim()) {
-            newErrors.description = 'Описание технологии обязательно';
-        } else if (formData.description.trim().length < 5) {
-            newErrors.description = 'Описание должно содержать минимум 5 символов';
+        // Проверка описания
+        const trimmedDesc = formFields.description.trim();
+        if (!trimmedDesc) {
+            fieldErrors.description = 'Укажите описание';
+        } else if (trimmedDesc.length < 5) {
+            fieldErrors.description = 'Минимум 5 символов';
         }
 
-        if (formData.deadline) {
-            const deadlineDate = new Date(formData.deadline);
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            if (deadlineDate < today) {
-                newErrors.deadline = 'Дедлайн не может быть в прошлом';
+        // Проверка дедлайна
+        if (formFields.deadline) {
+            const selectedDate = new Date(formFields.deadline);
+            const currentDate = new Date();
+            currentDate.setHours(0, 0, 0, 0);
+            if (selectedDate < currentDate) {
+                fieldErrors.deadline = 'Дата не может быть в прошлом';
             }
         }
 
-        formData.resources.forEach((resource, index) => {
-            if (resource.trim() && !isValidUrl(resource)) {
-                newErrors[`resource_${index}`] = 'Введите корректный URL';
+        // Проверка ресурсов
+        formFields.resources.forEach((url, idx) => {
+            if (url.trim() && !checkUrlFormat(url)) {
+                fieldErrors[`resource_${idx}`] = 'Некорректный URL';
             }
         });
 
-        setErrors(newErrors);
-        setIsFormValid(Object.keys(newErrors).length === 0);
+        return {
+            errors: fieldErrors,
+            isValid: Object.keys(fieldErrors).length === 0
+        };
+    }, [formFields]);
+
+    const modifyField = (fieldName, fieldValue) => {
+        setFormFields(current => ({ ...current, [fieldName]: fieldValue }));
     };
 
-    const isValidUrl = (string) => {
-        try {
-            new URL(string);
-            return true;
-        } catch {
-            return false;
+    const modifyResource = (idx, newValue) => {
+        const updatedResources = [...formFields.resources];
+        updatedResources[idx] = newValue;
+        setFormFields(current => ({ ...current, resources: updatedResources }));
+    };
+
+    const appendResourceField = () => {
+        setFormFields(current => ({ 
+            ...current, 
+            resources: [...current.resources, ''] 
+        }));
+    };
+
+    const deleteResourceField = (idx) => {
+        if (formFields.resources.length > 1) {
+            const filteredResources = formFields.resources.filter((_, i) => i !== idx);
+            setFormFields(current => ({ ...current, resources: filteredResources }));
         }
     };
 
-    useEffect(() => {
-        validateForm();
-    }, [formData]);
-
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
-    };
-
-    const handleResourceChange = (index, value) => {
-        const newResources = [...formData.resources];
-        newResources[index] = value;
-        setFormData(prev => ({ ...prev, resources: newResources }));
-    };
-
-    const addResourceField = () => {
-        setFormData(prev => ({ ...prev, resources: [...prev.resources, ''] }));
-    };
-
-    const removeResourceField = (index) => {
-        if (formData.resources.length > 1) {
-            const newResources = formData.resources.filter((_, i) => i !== index);
-            setFormData(prev => ({ ...prev, resources: newResources }));
-        }
-    };
-
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        if (isFormValid) {
+    const submitForm = (evt) => {
+        evt.preventDefault();
+        if (validationResult.isValid) {
             const cleanedData = {
-                ...formData,
-                resources: formData.resources.filter(r => r.trim() !== '')
+                ...formFields,
+                resources: formFields.resources.filter(r => r.trim() !== '')
             };
             onSave(cleanedData);
         }
     };
 
-    // Стили для TextField чтобы поддерживали тему
-    const textFieldStyles = {
+    const inputStyles = {
         '& .MuiOutlinedInput-root': {
-            backgroundColor: 'background.default',
-        }
+            '&:hover fieldset': {
+                borderColor: '#7c3aed',
+            },
+            '&.Mui-focused fieldset': {
+                borderColor: '#7c3aed',
+            },
+        },
+        '& .MuiInputLabel-root.Mui-focused': {
+            color: '#7c3aed',
+        },
     };
 
     return (
         <Paper 
+            elevation={0}
             sx={{ 
                 p: 4, 
                 maxWidth: 600, 
                 margin: '0 auto',
-                backgroundColor: 'background.paper',
-                backgroundImage: 'none',
-                color: 'text.primary'
+                border: '1px solid',
+                borderColor: 'divider',
+                position: 'relative',
+                overflow: 'hidden',
+                '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: 4,
+                    background: 'linear-gradient(90deg, #7c3aed, #ec4899)',
+                },
             }}
         >
-            <Typography variant="h5" component="h2" align="center" gutterBottom>
-                {initialData.title ? 'Редактирование технологии' : 'Добавление новой технологии'}
+            <Typography 
+                variant="h5" 
+                align="center" 
+                sx={{ 
+                    mb: 3,
+                    fontWeight: 600,
+                }}
+            >
+                {initialData.title ? '✏️ Изменение записи' : '➕ Новая запись'}
             </Typography>
 
             <Box 
                 component="form" 
-                onSubmit={handleSubmit} 
+                onSubmit={submitForm} 
                 noValidate
-                sx={{
-                    // Явно задаем прозрачный фон для формы
-                    backgroundColor: 'transparent'
-                }}
+                sx={{ backgroundColor: 'transparent' }}
             >
-                {/* Название */}
                 <TextField
                     fullWidth
-                    label="Название технологии *"
-                    name="title"
-                    value={formData.title}
-                    onChange={handleChange}
-                    error={!!errors.title}
-                    helperText={errors.title}
+                    label="Название *"
+                    value={formFields.title}
+                    onChange={(evt) => modifyField('title', evt.target.value)}
+                    error={!!validationResult.errors.title}
+                    helperText={validationResult.errors.title}
                     margin="normal"
-                    placeholder="Например: React, Node.js, TypeScript"
-                    sx={textFieldStyles}
+                    placeholder="React, Node.js, TypeScript..."
+                    sx={inputStyles}
                 />
 
-                {/* Описание */}
                 <TextField
                     fullWidth
                     label="Описание *"
-                    name="description"
-                    value={formData.description}
-                    onChange={handleChange}
-                    error={!!errors.description}
-                    helperText={errors.description}
+                    value={formFields.description}
+                    onChange={(evt) => modifyField('description', evt.target.value)}
+                    error={!!validationResult.errors.description}
+                    helperText={validationResult.errors.description}
                     margin="normal"
                     multiline
                     rows={4}
-                    placeholder="Опишите, что это за технология и зачем её изучать..."
-                    sx={textFieldStyles}
+                    placeholder="Опишите технологию и цели изучения..."
+                    sx={inputStyles}
                 />
 
-                {/* Категория и сложность в одной строке */}
                 <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
                     <FormControl fullWidth>
                         <InputLabel>Категория</InputLabel>
                         <Select
-                            name="category"
-                            value={formData.category}
-                            onChange={handleChange}
+                            value={formFields.category}
+                            onChange={(evt) => modifyField('category', evt.target.value)}
                             label="Категория"
-                            sx={textFieldStyles}
+                            sx={inputStyles}
                         >
                             <MenuItem value="frontend">Frontend</MenuItem>
                             <MenuItem value="backend">Backend</MenuItem>
@@ -195,11 +216,10 @@ function TechnologyForm({ onSave, onCancel, initialData = {} }) {
                     <FormControl fullWidth>
                         <InputLabel>Сложность</InputLabel>
                         <Select
-                            name="difficulty"
-                            value={formData.difficulty}
-                            onChange={handleChange}
+                            value={formFields.difficulty}
+                            onChange={(evt) => modifyField('difficulty', evt.target.value)}
                             label="Сложность"
-                            sx={textFieldStyles}
+                            sx={inputStyles}
                         >
                             <MenuItem value="beginner">Начальный</MenuItem>
                             <MenuItem value="intermediate">Средний</MenuItem>
@@ -208,45 +228,43 @@ function TechnologyForm({ onSave, onCancel, initialData = {} }) {
                     </FormControl>
                 </Box>
 
-                {/* Дедлайн */}
                 <TextField
                     fullWidth
-                    label="Дедлайн"
-                    name="deadline"
+                    label="Целевая дата"
                     type="date"
-                    value={formData.deadline}
-                    onChange={handleChange}
-                    error={!!errors.deadline}
-                    helperText={errors.deadline}
+                    value={formFields.deadline}
+                    onChange={(evt) => modifyField('deadline', evt.target.value)}
+                    error={!!validationResult.errors.deadline}
+                    helperText={validationResult.errors.deadline}
                     margin="normal"
-                    InputLabelProps={{
-                        shrink: true,
-                    }}
-                    sx={textFieldStyles}
+                    InputLabelProps={{ shrink: true }}
+                    sx={inputStyles}
                 />
 
-                {/* Ресурсы */}
                 <Box sx={{ mt: 3 }}>
-                    <Typography variant="h6" gutterBottom>
-                        Ресурсы для изучения
+                    <Typography variant="h6" sx={{ mb: 2, fontWeight: 500 }}>
+                        📚 Материалы для изучения
                     </Typography>
-                    {formData.resources.map((resource, index) => (
-                        <Box key={index} sx={{ display: 'flex', gap: 1, mb: 1, alignItems: 'flex-start' }}>
+                    {formFields.resources.map((resourceUrl, idx) => (
+                        <Box key={idx} sx={{ display: 'flex', gap: 1, mb: 1.5, alignItems: 'flex-start' }}>
                             <TextField
                                 fullWidth
                                 type="url"
-                                value={resource}
-                                onChange={(e) => handleResourceChange(index, e.target.value)}
-                                placeholder="https://example.com"
-                                error={!!errors[`resource_${index}`]}
-                                helperText={errors[`resource_${index}`]}
-                                sx={textFieldStyles}
+                                value={resourceUrl}
+                                onChange={(evt) => modifyResource(idx, evt.target.value)}
+                                placeholder="https://..."
+                                error={!!validationResult.errors[`resource_${idx}`]}
+                                helperText={validationResult.errors[`resource_${idx}`]}
+                                size="small"
+                                sx={inputStyles}
                             />
-                            {formData.resources.length > 1 && (
+                            {formFields.resources.length > 1 && (
                                 <IconButton
-                                    onClick={() => removeResourceField(index)}
-                                    color="error"
-                                    sx={{ mt: 1 }}
+                                    onClick={() => deleteResourceField(idx)}
+                                    sx={{ 
+                                        color: '#ef4444',
+                                        '&:hover': { bgcolor: 'rgba(239, 68, 68, 0.08)' }
+                                    }}
                                 >
                                     <DeleteIcon />
                                 </IconButton>
@@ -255,21 +273,38 @@ function TechnologyForm({ onSave, onCancel, initialData = {} }) {
                     ))}
                     <Button
                         startIcon={<AddIcon />}
-                        onClick={addResourceField}
+                        onClick={appendResourceField}
+                        sx={{ 
+                            mt: 1,
+                            color: '#7c3aed',
+                            borderColor: '#7c3aed',
+                            '&:hover': {
+                                borderColor: '#6d28d9',
+                                bgcolor: 'rgba(124, 58, 237, 0.08)',
+                            },
+                        }}
                         variant="outlined"
-                        sx={{ mt: 1 }}
                     >
-                        Добавить ресурс
+                        Добавить ссылку
                     </Button>
                 </Box>
 
-                {/* Кнопки */}
                 <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', mt: 4 }}>
                     <Button
                         type="submit"
                         variant="contained"
-                        disabled={!isFormValid}
+                        disabled={!validationResult.isValid}
                         size="large"
+                        sx={{
+                            px: 4,
+                            background: 'linear-gradient(135deg, #7c3aed, #ec4899)',
+                            '&:hover': {
+                                background: 'linear-gradient(135deg, #6d28d9, #db2777)',
+                            },
+                            '&.Mui-disabled': {
+                                background: '#e5e7eb',
+                            },
+                        }}
                     >
                         Сохранить
                     </Button>
@@ -278,8 +313,15 @@ function TechnologyForm({ onSave, onCancel, initialData = {} }) {
                         onClick={onCancel}
                         variant="outlined"
                         size="large"
+                        sx={{
+                            px: 4,
+                            borderColor: 'divider',
+                            '&:hover': {
+                                borderColor: '#7c3aed',
+                            },
+                        }}
                     >
-                        Отмена
+                        Отменить
                     </Button>
                 </Box>
             </Box>

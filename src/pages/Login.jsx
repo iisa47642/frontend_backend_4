@@ -1,5 +1,5 @@
 // src/pages/Login.jsx
-import { useState, useContext } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Container,
@@ -8,26 +8,29 @@ import {
   Button,
   Typography,
   Box,
-  Alert
+  Alert,
+  Avatar,
 } from '@mui/material';
-import { ThemeContext } from '../context/ThemeContext';
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 
 function Login({ onLogin }) {
-    const [username, setUsername] = useState('');
-    const [password, setPassword] = useState('');
-    const [error, setError] = useState('');
-    const navigate = useNavigate();
-    const { isDarkMode } = useContext(ThemeContext);
+    const [userLogin, setUserLogin] = useState('');
+    const [userPassword, setUserPassword] = useState('');
+    const [errorMessage, setErrorMessage] = useState('');
+    const navigation = useNavigate();
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        setError('');
+    const processLogin = (evt) => {
+        evt.preventDefault();
+        setErrorMessage('');
 
-        if (username.trim() && password === 'password') {
-            onLogin(username.trim());
-            navigate('/technologies');
+        const trimmedLogin = userLogin.trim();
+        const isValidCredentials = trimmedLogin && userPassword === 'password';
+
+        if (isValidCredentials) {
+            onLogin(trimmedLogin);
+            navigation('/technologies');
         } else {
-            setError('Либо пустой логин, либо неверный пароль. (пароль: password)');
+            setErrorMessage('Проверьте введённые данные. Подсказка: пароль — password');
         }
     };
 
@@ -35,56 +38,98 @@ function Login({ onLogin }) {
         <Container component="main" maxWidth="xs">
             <Box
                 sx={{
-                    marginTop: 8,
+                    marginTop: 10,
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
                 }}
             >
                 <Paper 
-                    elevation={3} 
+                    elevation={0}
                     sx={{ 
-                        p: 4, 
+                        p: 5, 
                         width: '100%',
-                        backgroundColor: 'background.paper',
-                        backgroundImage: 'none',
-                        color: 'text.primary'
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        position: 'relative',
+                        overflow: 'hidden',
+                        '&::before': {
+                            content: '""',
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            height: 4,
+                            background: 'linear-gradient(90deg, #7c3aed, #ec4899)',
+                        },
                     }}
                 >
-                    <Typography component="h1" variant="h5" align="center" gutterBottom>
-                        Вход
-                    </Typography>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 3 }}>
+                        <Avatar 
+                            sx={{ 
+                                width: 56, 
+                                height: 56, 
+                                mb: 2,
+                                background: 'linear-gradient(135deg, #7c3aed, #ec4899)',
+                            }}
+                        >
+                            <LockOutlinedIcon />
+                        </Avatar>
+                        <Typography 
+                            component="h1" 
+                            variant="h4" 
+                            sx={{ 
+                                fontWeight: 700,
+                                background: 'linear-gradient(135deg, #7c3aed, #ec4899)',
+                                backgroundClip: 'text',
+                                WebkitBackgroundClip: 'text',
+                                color: 'transparent',
+                            }}
+                        >
+                            Авторизация
+                        </Typography>
+                    </Box>
                     
-                    {error && (
-                        <Alert severity="error" sx={{ mb: 2 }}>
-                            {error}
+                    {errorMessage && (
+                        <Alert 
+                            severity="error" 
+                            sx={{ 
+                                mb: 3,
+                                borderRadius: 2,
+                            }}
+                        >
+                            {errorMessage}
                         </Alert>
                     )}
 
                     <Box 
                         component="form" 
-                        onSubmit={handleSubmit} 
-                        sx={{ 
-                            mt: 1,
-                            // Явно задаем прозрачный фон для формы
-                            backgroundColor: 'transparent'
-                        }}
+                        onSubmit={processLogin} 
+                        sx={{ backgroundColor: 'transparent' }}
                     >
                         <TextField
                             margin="normal"
                             required
                             fullWidth
-                            id="username"
-                            label="Имя пользователя"
-                            name="username"
+                            id="login-field"
+                            label="Логин"
+                            name="login"
                             autoComplete="username"
                             autoFocus
-                            value={username}
-                            onChange={(e) => setUsername(e.target.value)}
+                            value={userLogin}
+                            onChange={(evt) => setUserLogin(evt.target.value)}
                             sx={{
                                 '& .MuiOutlinedInput-root': {
-                                    backgroundColor: 'background.default',
-                                }
+                                    '&:hover fieldset': {
+                                        borderColor: '#7c3aed',
+                                    },
+                                    '&.Mui-focused fieldset': {
+                                        borderColor: '#7c3aed',
+                                    },
+                                },
+                                '& .MuiInputLabel-root.Mui-focused': {
+                                    color: '#7c3aed',
+                                },
                             }}
                         />
                         <TextField
@@ -94,28 +139,53 @@ function Login({ onLogin }) {
                             name="password"
                             label="Пароль"
                             type="password"
-                            id="password"
+                            id="password-field"
                             autoComplete="current-password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
+                            value={userPassword}
+                            onChange={(evt) => setUserPassword(evt.target.value)}
                             sx={{
                                 '& .MuiOutlinedInput-root': {
-                                    backgroundColor: 'background.default',
-                                }
+                                    '&:hover fieldset': {
+                                        borderColor: '#7c3aed',
+                                    },
+                                    '&.Mui-focused fieldset': {
+                                        borderColor: '#7c3aed',
+                                    },
+                                },
+                                '& .MuiInputLabel-root.Mui-focused': {
+                                    color: '#7c3aed',
+                                },
                             }}
                         />
                         <Button
                             type="submit"
                             fullWidth
                             variant="contained"
-                            sx={{ mt: 3, mb: 2 }}
+                            sx={{ 
+                                mt: 4, 
+                                mb: 2,
+                                py: 1.5,
+                                background: 'linear-gradient(135deg, #7c3aed, #ec4899)',
+                                '&:hover': {
+                                    background: 'linear-gradient(135deg, #6d28d9, #db2777)',
+                                },
+                            }}
                         >
-                            Войти
+                            Войти в систему
                         </Button>
                         
-                        <Typography variant="body2" color="text.secondary" align="center">
-                            Подсказка: любой логин + пароль <b>password</b>
-                        </Typography>
+                        <Box 
+                            sx={{ 
+                                mt: 2, 
+                                p: 2, 
+                                borderRadius: 2,
+                                bgcolor: 'action.hover',
+                            }}
+                        >
+                            <Typography variant="body2" color="text.secondary" align="center">
+                                💡 Используйте любой логин и пароль <strong>password</strong>
+                            </Typography>
+                        </Box>
                     </Box>
                 </Paper>
             </Box>

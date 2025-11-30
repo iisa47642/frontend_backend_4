@@ -16,114 +16,203 @@ import {
   Paper,
   Chip
 } from '@mui/material';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import useTechnologies from '../hooks/useTechnologies';
 
 function BulkStatusEditor() {
     const { technologies, setTechnologies } = useTechnologies();
-    const [selectedIds, setSelectedIds] = useState(new Set());
-    const [newStatus, setNewStatus] = useState('in-progress');
+    const [checkedItems, setCheckedItems] = useState(new Set());
+    const [targetStatus, setTargetStatus] = useState('in-progress');
 
-    const toggleSelect = (id) => {
-        const newSet = new Set(selectedIds);
-        if (newSet.has(id)) {
-            newSet.delete(id);
+    const handleItemToggle = (itemId) => {
+        const updatedSet = new Set(checkedItems);
+        if (updatedSet.has(itemId)) {
+            updatedSet.delete(itemId);
         } else {
-            newSet.add(id);
+            updatedSet.add(itemId);
         }
-        setSelectedIds(newSet);
+        setCheckedItems(updatedSet);
     };
 
-    const selectAll = () => {
-        const allIds = new Set(technologies.map(t => t.id));
-        setSelectedIds(allIds);
+    const markAllItems = () => {
+        const allIds = new Set(technologies.map(item => item.id));
+        setCheckedItems(allIds);
     };
 
-    const clearSelection = () => {
-        setSelectedIds(new Set());
+    const clearAllChecks = () => {
+        setCheckedItems(new Set());
     };
 
-    const applyBulkUpdate = () => {
-        if (selectedIds.size === 0) {
-            alert('Выберите хотя бы одну технологию');
+    const executeStatusUpdate = () => {
+        if (checkedItems.size === 0) {
+            alert('Выберите хотя бы одну запись');
             return;
         }
 
-        const updated = technologies.map(t =>
-            selectedIds.has(t.id) ? { ...t, status: newStatus } : t
+        const modifiedList = technologies.map(item =>
+            checkedItems.has(item.id) ? { ...item, status: targetStatus } : item
         );
 
-        setTechnologies(updated);
-        setSelectedIds(new Set());
-        alert(`Статус обновлён для ${selectedIds.size} технологий`);
+        setTechnologies(modifiedList);
+        setCheckedItems(new Set());
+        alert(`✅ Обновлено ${checkedItems.size} записей`);
     };
 
-    const statusLabels = {
-        'not-started': 'Не начато',
-        'in-progress': 'В процессе',
-        'completed': 'Изучено'
+    const statusTranslations = {
+        'not-started': 'Ожидает',
+        'in-progress': 'Изучаю',
+        'completed': 'Освоено'
+    };
+
+    const getStatusChipStyle = (status) => {
+        const styles = {
+            'completed': { bgcolor: 'rgba(16, 185, 129, 0.1)', color: '#10b981' },
+            'in-progress': { bgcolor: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' },
+            'not-started': { bgcolor: 'rgba(107, 114, 128, 0.1)', color: '#6b7280' },
+        };
+        return styles[status] || styles['not-started'];
     };
 
     return (
-        <Paper sx={{ p: 3, mt: 4 }}>
-            <Typography variant="h6" gutterBottom>
-                Массовое редактирование статусов
+        <Paper 
+            elevation={0}
+            sx={{ 
+                p: 4, 
+                border: '1px solid',
+                borderColor: 'divider',
+            }}
+        >
+            <Typography variant="h5" sx={{ fontWeight: 600, mb: 3 }}>
+                ⚡ Массовое редактирование
             </Typography>
 
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'center', mb: 3 }}>
-                <Button variant="outlined" onClick={selectAll}>
+                <Button 
+                    variant="outlined" 
+                    onClick={markAllItems}
+                    sx={{
+                        borderColor: '#7c3aed',
+                        color: '#7c3aed',
+                        '&:hover': {
+                            borderColor: '#6d28d9',
+                            bgcolor: 'rgba(124, 58, 237, 0.08)',
+                        },
+                    }}
+                >
                     Выбрать все
                 </Button>
-                <Button variant="outlined" onClick={clearSelection}>
-                    Снять выбор
+                <Button 
+                    variant="outlined" 
+                    onClick={clearAllChecks}
+                    sx={{
+                        borderColor: 'divider',
+                        '&:hover': {
+                            borderColor: '#7c3aed',
+                        },
+                    }}
+                >
+                    Сбросить
                 </Button>
 
-                <FormControl sx={{ minWidth: 200 }}>
+                <FormControl sx={{ minWidth: 200, ml: 'auto' }}>
                     <InputLabel>Новый статус</InputLabel>
                     <Select
-                        value={newStatus}
-                        onChange={(e) => setNewStatus(e.target.value)}
+                        value={targetStatus}
+                        onChange={(evt) => setTargetStatus(evt.target.value)}
                         label="Новый статус"
+                        sx={{
+                            '& .MuiOutlinedInput-notchedOutline': {
+                                borderColor: 'divider',
+                            },
+                            '&:hover .MuiOutlinedInput-notchedOutline': {
+                                borderColor: '#7c3aed',
+                            },
+                            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                borderColor: '#7c3aed',
+                            },
+                        }}
                     >
-                        {Object.entries(statusLabels).map(([value, label]) => (
-                            <MenuItem key={value} value={value}>{label}</MenuItem>
+                        {Object.entries(statusTranslations).map(([key, label]) => (
+                            <MenuItem key={key} value={key}>{label}</MenuItem>
                         ))}
                     </Select>
                 </FormControl>
 
                 <Button
                     variant="contained"
-                    onClick={applyBulkUpdate}
-                    disabled={selectedIds.size === 0}
-                    sx={{ ml: 'auto' }}
+                    onClick={executeStatusUpdate}
+                    disabled={checkedItems.size === 0}
+                    startIcon={<CheckCircleIcon />}
+                    sx={{
+                        background: 'linear-gradient(135deg, #7c3aed, #ec4899)',
+                        '&:hover': {
+                            background: 'linear-gradient(135deg, #6d28d9, #db2777)',
+                        },
+                        '&.Mui-disabled': {
+                            background: '#e5e7eb',
+                        },
+                    }}
                 >
-                    Обновить статус ({selectedIds.size})
+                    Применить ({checkedItems.size})
                 </Button>
             </Box>
 
-            <List sx={{ maxHeight: 300, overflow: 'auto', border: 1, borderColor: 'divider', borderRadius: 1 }}>
-                {technologies.map(tech => (
+            <List 
+                sx={{ 
+                    maxHeight: 350, 
+                    overflow: 'auto', 
+                    border: '1px solid',
+                    borderColor: 'divider',
+                    borderRadius: 2,
+                }}
+            >
+                {technologies.map(item => (
                     <ListItem
-                        key={tech.id}
+                        key={item.id}
                         dense
-                        button
-                        onClick={() => toggleSelect(tech.id)}
+                        sx={{
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                            borderBottom: '1px solid',
+                            borderColor: 'divider',
+                            '&:last-child': { borderBottom: 'none' },
+                            '&:hover': { 
+                                bgcolor: 'rgba(124, 58, 237, 0.04)',
+                            },
+                            ...(checkedItems.has(item.id) && {
+                                bgcolor: 'rgba(124, 58, 237, 0.08)',
+                            }),
+                        }}
+                        onClick={() => handleItemToggle(item.id)}
                     >
                         <ListItemIcon>
                             <Checkbox
                                 edge="start"
-                                checked={selectedIds.has(tech.id)}
+                                checked={checkedItems.has(item.id)}
                                 tabIndex={-1}
                                 disableRipple
+                                sx={{
+                                    '&.Mui-checked': {
+                                        color: '#7c3aed',
+                                    },
+                                }}
                             />
                         </ListItemIcon>
                         <ListItemText
-                            primary={tech.title}
+                            primary={
+                                <Typography sx={{ fontWeight: 500 }}>
+                                    {item.title}
+                                </Typography>
+                            }
                             secondary={
                                 <Chip
-                                    label={statusLabels[tech.status]}
+                                    label={statusTranslations[item.status]}
                                     size="small"
-                                    variant="outlined"
-                                    sx={{ mt: 0.5 }}
+                                    sx={{ 
+                                        mt: 0.5,
+                                        fontWeight: 500,
+                                        ...getStatusChipStyle(item.status),
+                                    }}
                                 />
                             }
                         />
