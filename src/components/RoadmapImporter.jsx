@@ -1,74 +1,85 @@
 // src/components/RoadmapImporter.jsx
 import { useState } from 'react';
+import { Box, Button, Typography, CircularProgress } from '@mui/material';
+import CloudDownloadIcon from '@mui/icons-material/CloudDownload';
 import useTechnologies from '../hooks/useTechnologies';
 
 function RoadmapImporter() {
-    const { technologies: localTechs, setTechnologies } = useTechnologies();
-    const [importing, setImporting] = useState(false);
+    const { technologies: existingData, setTechnologies } = useTechnologies();
+    const [isLoading, setIsLoading] = useState(false);
 
-    const importFromApi = async () => {
-        setImporting(true);
+    const fetchFromExternalApi = async () => {
+        setIsLoading(true);
         try {
-            // 🔥 Делаем запрос напрямую — без кастомного хука
-            const response = await fetch('https://jsonplaceholder.typicode.com/users');
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const apiResponse = await fetch('https://jsonplaceholder.typicode.com/users');
+            if (!apiResponse.ok) throw new Error(`Статус: ${apiResponse.status}`);
 
-            const users = await response.json();
+            const userData = await apiResponse.json();
 
-            // Преобразуем под формат технологии
-            const apiTechnologies = users.map(user => ({
+            // Преобразование в формат приложения
+            const transformedData = userData.map(user => ({
                 id: user.id,
                 title: user.name,
-                description: `Email: ${user.email} | Город: ${user.address.city}`,
+                description: `📧 ${user.email} | 🏙️ ${user.address.city}`,
                 status: 'not-started',
                 notes: '',
                 category: 'api'
             }));
 
-            if (apiTechnologies.length === 0) {
-                alert('API вернул пустой список.');
+            if (transformedData.length === 0) {
+                alert('API вернул пустой ответ');
                 return;
             }
 
-            // Фильтруем дубли
-            const existingIds = new Set(localTechs.map(t => t.id));
-            const newTechs = apiTechnologies.filter(t => !existingIds.has(t.id));
+            // Исключение дубликатов
+            const currentIds = new Set(existingData.map(item => item.id));
+            const uniqueItems = transformedData.filter(item => !currentIds.has(item.id));
 
-            if (newTechs.length === 0) {
-                alert('Все технологии уже есть в списке.');
+            if (uniqueItems.length === 0) {
+                alert('Все данные уже присутствуют в каталоге');
                 return;
             }
 
-            // Сохраняем в localStorage через useTechnologies
-            setTechnologies(prev => [...prev, ...newTechs]);
-            alert(`Успешно импортировано ${newTechs.length} технологий!`);
+            setTechnologies(current => [...current, ...uniqueItems]);
+            alert(`✅ Добавлено ${uniqueItems.length} новых записей`);
 
-        } catch (err) {
-            console.error('Ошибка импорта:', err);
-            alert('Ошибка при импорте: ' + (err.message || 'неизвестная'));
+        } catch (fetchError) {
+            console.error('Ошибка загрузки:', fetchError);
+            alert('❌ Не удалось загрузить данные: ' + (fetchError.message || 'неизвестная ошибка'));
         } finally {
-            setImporting(false);
+            setIsLoading(false);
         }
     };
 
     return (
-        <div className="roadmap-importer" style={{ margin: '20px 0', padding: '15px', border: '1px solid #ddd', borderRadius: '8px' }}>
-            <h3>📥 Импорт технологий из API</h3>
-            <button
-                onClick={importFromApi}
-                disabled={importing}
-                style={{
-                    padding: '8px 16px',
-                    backgroundColor: importing ? '#ccc' : '#2ecc71',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: importing ? 'not-allowed' : 'pointer'
+        <Box>
+            <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+                📥 Импорт из внешнего источника
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                Загрузите демо-данные из JSONPlaceholder API
+            </Typography>
+            <Button
+                onClick={fetchFromExternalApi}
+                disabled={isLoading}
+                variant="contained"
+                startIcon={isLoading ? <CircularProgress size={20} color="inherit" /> : <CloudDownloadIcon />}
+                sx={{
+                    background: isLoading 
+                        ? '#9ca3af' 
+                        : 'linear-gradient(135deg, #10b981, #34d399)',
+                    '&:hover': {
+                        background: 'linear-gradient(135deg, #059669, #10b981)',
+                    },
+                    '&.Mui-disabled': {
+                        background: '#e5e7eb',
+                        color: '#9ca3af',
+                    },
                 }}
             >
-                {importing ? 'Импорт...' : 'Загрузить из JSONPlaceholder'}
-            </button>
-        </div>
+                {isLoading ? 'Загрузка...' : 'Импортировать данные'}
+            </Button>
+        </Box>
     );
 }
 

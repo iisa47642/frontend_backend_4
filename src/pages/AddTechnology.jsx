@@ -2,36 +2,52 @@
 import { useNavigate } from 'react-router-dom';
 import {
   Container,
-  Typography
+  Typography,
+  Box,
 } from '@mui/material';
 import TechnologyForm from '../components/TechnologyForm';
 import useTechnologies from '../hooks/useTechnologies';
 
 function AddTechnology() {
     const { technologies, setTechnologies } = useTechnologies();
-    const navigate = useNavigate();
+    const routerNavigation = useNavigate();
 
-    const handleSave = (newData) => {
-        const newTech = {
+    const saveNewTechnology = (formData) => {
+        const techEntry = {
             id: Date.now(),
-            ...newData,
+            ...formData,
             status: 'not-started',
             notes: ''
         };
-        setTechnologies([...technologies, newTech]);
-        navigate('/technologies');
+        setTechnologies([...technologies, techEntry]);
+        routerNavigation('/technologies');
     };
 
-    const handleCancel = () => {
-        navigate('/technologies');
+    const discardChanges = () => {
+        routerNavigation('/technologies');
     };
 
     return (
         <Container maxWidth="lg" sx={{ py: 4 }}>
-            <Typography variant="h4" component="h1" gutterBottom>
-                Добавление технологии
-            </Typography>
-            <TechnologyForm onSave={handleSave} onCancel={handleCancel} />
+            <Box sx={{ mb: 4 }}>
+                <Typography 
+                    variant="h3" 
+                    sx={{ 
+                        fontWeight: 700,
+                        mb: 1,
+                        background: 'linear-gradient(135deg, #7c3aed, #ec4899)',
+                        backgroundClip: 'text',
+                        WebkitBackgroundClip: 'text',
+                        color: 'transparent',
+                    }}
+                >
+                    Новая технология
+                </Typography>
+                <Typography variant="body1" color="text.secondary">
+                    Добавьте технологию в ваш каталог для отслеживания
+                </Typography>
+            </Box>
+            <TechnologyForm onSave={saveNewTechnology} onCancel={discardChanges} />
         </Container>
     );
 }

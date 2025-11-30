@@ -15,67 +15,98 @@ import {
   ListItemText,
   useTheme,
   useMediaQuery,
+  Avatar,
 } from '@mui/material';
 import MenuIcon from '@mui/icons-material/Menu';
+import CodeIcon from '@mui/icons-material/Code';
 
 function Navigation({ isLoggedIn, username, onLogout }) {
-  const location = useLocation();
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const [drawerOpen, setDrawerOpen] = useState(false);
+  const currentLocation = useLocation();
+  const muiTheme = useTheme();
+  const compactView = useMediaQuery(muiTheme.breakpoints.down('md'));
+  const [menuVisible, setMenuVisible] = useState(false);
 
-  const isActive = (path) => location.pathname === path;
+  const checkActivePath = (routePath) => currentLocation.pathname === routePath;
 
-  const menuItems = [
-    { path: '/technologies', label: 'Все технологии' },
-    { path: '/add-technology', label: 'Добавить' },
-    { path: '/search', label: 'Поиск' },
-    { path: '/statistics', label: 'Статистика' },
-    { path: '/settings', label: 'Настройки' },
+  const navigationLinks = [
+    { route: '/technologies', text: 'Каталог' },
+    { route: '/add-technology', text: 'Создать' },
+    { route: '/search', text: 'Найти' },
+    { route: '/statistics', text: 'Аналитика' },
+    { route: '/settings', text: 'Параметры' },
   ];
 
-  const renderMenuItems = () => (
-    <>
-      {menuItems.map((item) => (
+  const buildDesktopMenu = () => (
+    <Box sx={{ display: 'flex', gap: 1 }}>
+      {navigationLinks.map((navItem) => (
         <Button
-          key={item.path}
-          color="inherit"
+          key={navItem.route}
           component={Link}
-          to={item.path}
+          to={navItem.route}
           sx={{
-            backgroundColor: isActive(item.path) ? '#0ea5a4' : 'transparent',
+            color: 'white',
+            px: 2,
+            py: 1,
+            borderRadius: '20px',
+            background: checkActivePath(navItem.route) 
+              ? 'linear-gradient(135deg, #7c3aed, #ec4899)' 
+              : 'transparent',
             '&:hover': {
-              backgroundColor: isActive(item.path) ? '#089191' : 'rgba(255,255,255,0.1)',
-            }
+              background: checkActivePath(navItem.route) 
+                ? 'linear-gradient(135deg, #6d28d9, #db2777)' 
+                : 'rgba(255,255,255,0.15)',
+            },
+            transition: 'all 0.3s ease',
           }}
         >
-          {item.label}
+          {navItem.text}
         </Button>
       ))}
-    </>
+    </Box>
   );
 
-  const renderDrawer = () => (
+  const buildMobileDrawer = () => (
     <Drawer
-      anchor="left"
-      open={drawerOpen}
-      onClose={() => setDrawerOpen(false)}
+      anchor="right"
+      open={menuVisible}
+      onClose={() => setMenuVisible(false)}
+      PaperProps={{
+        sx: {
+          background: 'linear-gradient(180deg, #1e1b4b, #312e81)',
+          color: 'white',
+        }
+      }}
     >
-      <Box sx={{ width: 250 }} role="presentation">
-        <List>
-          {menuItems.map((item) => (
+      <Box sx={{ width: 280, pt: 3 }} role="presentation">
+        <Box sx={{ px: 3, pb: 2, borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+          <Typography variant="h6" sx={{ fontWeight: 700 }}>
+            📚 Навигация
+          </Typography>
+        </Box>
+        <List sx={{ pt: 2 }}>
+          {navigationLinks.map((navItem) => (
             <ListItem
-              key={item.path}
+              key={navItem.route}
               component={Link}
-              to={item.path}
-              onClick={() => setDrawerOpen(false)}
+              to={navItem.route}
+              onClick={() => setMenuVisible(false)}
               sx={{
-                backgroundColor: isActive(item.path) ? '#0ea5a4' : 'transparent',
-                color: isActive(item.path) ? 'white' : 'inherit',
+                mx: 2,
+                mb: 1,
+                borderRadius: '12px',
+                background: checkActivePath(navItem.route) 
+                  ? 'linear-gradient(135deg, #7c3aed, #ec4899)' 
+                  : 'transparent',
+                '&:hover': {
+                  background: 'rgba(255,255,255,0.1)',
+                },
                 textDecoration: 'none',
               }}
             >
-              <ListItemText primary={item.label} />
+              <ListItemText 
+                primary={navItem.text} 
+                sx={{ color: 'white' }}
+              />
             </ListItem>
           ))}
         </List>
@@ -84,10 +115,26 @@ function Navigation({ isLoggedIn, username, onLogout }) {
   );
 
   return (
-    <AppBar position="static" sx={{ background: 'linear-gradient(90deg, #1f2937, #111827)' }}>
-      <Toolbar sx={{ display: 'flex', justifyContent: 'space-between' }}>
-        {/* Левая часть */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+    <AppBar 
+      position="sticky" 
+      elevation={0}
+      sx={{ 
+        background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4c1d95 100%)',
+        borderBottom: '1px solid rgba(255,255,255,0.1)',
+      }}
+    >
+      <Toolbar sx={{ display: 'flex', justifyContent: 'space-between', py: 1 }}>
+        {/* Логотип слева */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Avatar 
+            sx={{ 
+              background: 'linear-gradient(135deg, #7c3aed, #ec4899)',
+              width: 40,
+              height: 40,
+            }}
+          >
+            <CodeIcon />
+          </Avatar>
           <Typography
             variant="h6"
             component={Link}
@@ -96,63 +143,79 @@ function Navigation({ isLoggedIn, username, onLogout }) {
               textDecoration: 'none',
               color: 'white',
               fontWeight: 700,
-              marginRight: 2
+              background: 'linear-gradient(90deg, #a78bfa, #f472b6)',
+              backgroundClip: 'text',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
             }}
           >
-            🚀 Трекер технологий
+            DevProgress
           </Typography>
-          
-          {!isMobile && renderMenuItems()}
         </Box>
+
+        {/* Центральное меню */}
+        {!compactView && buildDesktopMenu()}
 
         {/* Правая часть */}
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           {isLoggedIn ? (
             <>
-              {!isMobile && (
+              {!compactView && (
                 <Chip 
-                  label={`Привет, ${username}`} 
-                  variant="outlined" 
-                  sx={{ color: 'white', borderColor: 'rgba(255,255,255,0.3)' }} 
+                  avatar={<Avatar sx={{ bgcolor: '#7c3aed' }}>{username.charAt(0).toUpperCase()}</Avatar>}
+                  label={username} 
+                  sx={{ 
+                    color: 'white', 
+                    borderColor: 'rgba(255,255,255,0.3)',
+                    '& .MuiChip-avatar': { color: 'white' }
+                  }} 
+                  variant="outlined"
                 />
               )}
               <Button
-                color="inherit"
                 onClick={onLogout}
-                variant="outlined"
                 sx={{
+                  color: 'white',
                   borderColor: 'rgba(255,255,255,0.3)',
+                  borderRadius: '20px',
+                  px: 3,
                   '&:hover': {
-                    backgroundColor: 'rgba(255,255,255,0.1)',
+                    background: 'rgba(239, 68, 68, 0.2)',
+                    borderColor: '#ef4444',
                   }
                 }}
+                variant="outlined"
               >
-                Выйти
+                Выход
               </Button>
             </>
           ) : (
             <Button
-              color="inherit"
               component={Link}
               to="/login"
-              variant="outlined"
               sx={{
-                backgroundColor: isActive('/login') ? '#0ea5a4' : 'transparent',
-                borderColor: 'rgba(255,255,255,0.3)',
+                color: 'white',
+                borderRadius: '20px',
+                px: 3,
+                background: checkActivePath('/login') 
+                  ? 'linear-gradient(135deg, #7c3aed, #ec4899)' 
+                  : 'transparent',
+                border: '1px solid rgba(255,255,255,0.3)',
                 '&:hover': {
-                  backgroundColor: isActive('/login') ? '#089191' : 'rgba(255,255,255,0.1)',
+                  background: 'linear-gradient(135deg, #6d28d9, #db2777)',
+                  borderColor: 'transparent',
                 }
               }}
             >
-              Войти
+              Авторизация
             </Button>
           )}
 
-          {/* Бургер-меню для мобильных */}
-          {isMobile && (
+          {/* Мобильное меню */}
+          {compactView && (
             <IconButton
-              color="inherit"
-              onClick={() => setDrawerOpen(true)}
+              sx={{ color: 'white' }}
+              onClick={() => setMenuVisible(true)}
             >
               <MenuIcon />
             </IconButton>
@@ -160,7 +223,7 @@ function Navigation({ isLoggedIn, username, onLogout }) {
         </Box>
       </Toolbar>
 
-      {renderDrawer()}
+      {buildMobileDrawer()}
     </AppBar>
   );
 }

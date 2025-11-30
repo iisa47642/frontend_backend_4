@@ -1,5 +1,4 @@
 // src/pages/MuiDemo.jsx
-import { useState } from 'react';
 import Dashboard from '../components/Dashboard';
 import SimpleTechCard from '../components/SimpleTechCard';
 import useTechnologies from '../hooks/useTechnologies';

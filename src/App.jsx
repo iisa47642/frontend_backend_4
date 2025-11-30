@@ -1,11 +1,11 @@
 // src/App.jsx
 import './App.css';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { CustomThemeProvider } from './context/ThemeContext';
 import CssBaseline from '@mui/material/CssBaseline';
 
-// Импорты компонентов
+// Подключение модулей
 import Navigation from './components/Navigation';
 import ProtectedRoute from './components/ProtectedRoute';
 import Home from './pages/Home';
@@ -18,52 +18,71 @@ import Login from './pages/Login';
 import ProductSearch from './components/ProductSearch';
 import EditTechnology from './pages/EditTechnology';
 
+// Вспомогательная функция для работы с localStorage
+const readFromStorage = (key, fallback) => {
+    const storedValue = localStorage.getItem(key);
+    return storedValue !== null ? storedValue : fallback;
+};
+
+const writeToStorage = (key, value) => {
+    localStorage.setItem(key, value);
+};
+
+const removeFromStorage = (key) => {
+    localStorage.removeItem(key);
+};
+
 function App() {
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
-    const [username, setUsername] = useState('');
+    // Состояние авторизации
+    const [authStatus, setAuthStatus] = useState(() => 
+        readFromStorage('isLoggedIn', 'false') === 'true'
+    );
+    const [currentUser, setCurrentUser] = useState(() => 
+        readFromStorage('username', '')
+    );
 
-    useEffect(() => {
-        const logged = localStorage.getItem('isLoggedIn') === 'true';
-        const user = localStorage.getItem('username') || '';
-        setIsLoggedIn(logged);
-        setUsername(user);
-    }, []);
-
-    const handleLogin = (user) => {
-        setIsLoggedIn(true);
-        setUsername(user);
-        localStorage.setItem('isLoggedIn', 'true');
-        localStorage.setItem('username', user);
+    // Обработчик успешной авторизации
+    const handleSuccessfulLogin = (loginName) => {
+        setAuthStatus(true);
+        setCurrentUser(loginName);
+        writeToStorage('isLoggedIn', 'true');
+        writeToStorage('username', loginName);
     };
 
-    const handleLogout = () => {
-        setIsLoggedIn(false);
-        setUsername('');
-        localStorage.removeItem('isLoggedIn');
-        localStorage.removeItem('username');
+    // Обработчик выхода из системы
+    const handleUserLogout = () => {
+        setAuthStatus(false);
+        setCurrentUser('');
+        removeFromStorage('isLoggedIn');
+        removeFromStorage('username');
     };
 
     return (
         <CustomThemeProvider>
             <CssBaseline />
             <Router basename='frontend_and_backend_practice_react'>
-                <Navigation isLoggedIn={isLoggedIn} username={username} onLogout={handleLogout} />
+                <Navigation 
+                    isLoggedIn={authStatus} 
+                    username={currentUser} 
+                    onLogout={handleUserLogout} 
+                />
                 
-                <div className="app-container">
+                <main className="app-container">
                     <Routes>
+                        {/* Публичные маршруты */}
                         <Route path="/" element={<Home />} />
                         <Route path="/technologies" element={<TechnologyList />} />
                         <Route path="/technology/:id" element={<TechnologyDetail />} />
                         <Route path="/add-technology" element={<AddTechnology />} />
-                        <Route path="/login" element={<Login onLogin={handleLogin} />} />
-                        <Route path="/search" element={<ProductSearch/>} />
+                        <Route path="/login" element={<Login onLogin={handleSuccessfulLogin} />} />
+                        <Route path="/search" element={<ProductSearch />} />
                         <Route path="/edit-technology/:id" element={<EditTechnology />} />
 
-                        {/* защищенные маршруты */}
+                        {/* Страницы требующие авторизации */}
                         <Route
                             path="/statistics"
                             element={
-                                <ProtectedRoute isLoggedIn={isLoggedIn}>
+                                <ProtectedRoute isLoggedIn={authStatus}>
                                     <Statistics />
                                 </ProtectedRoute>
                             }
@@ -71,13 +90,13 @@ function App() {
                         <Route
                             path="/settings"
                             element={
-                                <ProtectedRoute isLoggedIn={isLoggedIn}>
-                                    <Settings setIsLoggedIn={setIsLoggedIn} />
+                                <ProtectedRoute isLoggedIn={authStatus}>
+                                    <Settings setIsLoggedIn={setAuthStatus} />
                                 </ProtectedRoute>
                             }
                         />
                     </Routes>
-                </div>
+                </main>
             </Router>
         </CustomThemeProvider>
     );

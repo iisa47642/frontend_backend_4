@@ -10,219 +10,327 @@ import {
   CardMedia,
   CircularProgress,
   Alert,
-  Chip
+  Chip,
+  Paper,
+  InputAdornment,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 
 function ProductSearch() {
-    const [products, setProducts] = useState([]);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
+    const [productList, setProductList] = useState([]);
+    const [queryText, setQueryText] = useState('');
+    const [isSearching, setIsSearching] = useState(false);
+    const [searchError, setSearchError] = useState(null);
 
-    const searchTimeoutRef = useRef(null);
-    const abortControllerRef = useRef(null);
+    const searchDelayRef = useRef(null);
+    const requestControllerRef = useRef(null);
 
-    const searchProducts = async (query) => {
-        if (abortControllerRef.current) {
-            abortControllerRef.current.abort();
+    const executeSearch = async (searchQuery) => {
+        // Отменяем предыдущий запрос
+        if (requestControllerRef.current) {
+            requestControllerRef.current.abort();
         }
         
-        abortControllerRef.current = new AbortController();
+        requestControllerRef.current = new AbortController();
         
         try {
-            setLoading(true);
-            setError(null);
+            setIsSearching(true);
+            setSearchError(null);
 
-            if (!query.trim()) {
-                setProducts([]);
-                setLoading(false);
+            const trimmedQuery = searchQuery.trim();
+            if (!trimmedQuery) {
+                setProductList([]);
+                setIsSearching(false);
                 return;
             }
 
-            const response = await fetch(
-                `https://dummyjson.com/products/search?q=${encodeURIComponent(query)}`,
-                { signal: abortControllerRef.current.signal }
+            const apiResponse = await fetch(
+                `https://dummyjson.com/products/search?q=${encodeURIComponent(trimmedQuery)}`,
+                { signal: requestControllerRef.current.signal }
             );
 
-            if (!response.ok) {
-                throw new Error(`Ошибка HTTP: ${response.status}`);
+            if (!apiResponse.ok) {
+                throw new Error(`Ошибка сервера: ${apiResponse.status}`);
             }
 
-            const data = await response.json();
-            setProducts(data.products || []);
-        } catch (err) {
-            if (err.name !== 'AbortError') {
-                setError(err.message);
-                console.error('Ошибка при поиске продуктов:', err);
+            const responseData = await apiResponse.json();
+            setProductList(responseData.products || []);
+        } catch (fetchError) {
+            if (fetchError.name !== 'AbortError') {
+                setSearchError(fetchError.message);
+                console.error('Ошибка поиска:', fetchError);
             }
         } finally {
-            setLoading(false);
+            setIsSearching(false);
         }
     };
 
-    const handleSearchChange = (e) => {
-        const value = e.target.value;
-        setSearchTerm(value);
+    const handleQueryChange = (evt) => {
+        const inputValue = evt.target.value;
+        setQueryText(inputValue);
 
-        if (searchTimeoutRef.current) {
-            clearTimeout(searchTimeoutRef.current);
+        // Debounce
+        if (searchDelayRef.current) {
+            clearTimeout(searchDelayRef.current);
         }
 
-        searchTimeoutRef.current = setTimeout(() => {
-            searchProducts(value);
+        searchDelayRef.current = setTimeout(() => {
+            executeSearch(inputValue);
         }, 500);
     };
 
     useEffect(() => {
         return () => {
-            if (searchTimeoutRef.current) {
-                clearTimeout(searchTimeoutRef.current);
+            if (searchDelayRef.current) {
+                clearTimeout(searchDelayRef.current);
             }
-            if (abortControllerRef.current) {
-                abortControllerRef.current.abort();
+            if (requestControllerRef.current) {
+                requestControllerRef.current.abort();
             }
         };
     }, []);
 
-    return (
-        <Container maxWidth="lg" sx={{ py: 4 }}>
-            <Typography variant="h4" component="h1" gutterBottom>
+    const renderSearchHeader = () => (
+        <Box sx={{ mb: 4 }}>
+            <Typography 
+                variant="h3" 
+                sx={{ 
+                    fontWeight: 700,
+                    mb: 1,
+                    background: 'linear-gradient(135deg, #7c3aed, #ec4899)',
+                    backgroundClip: 'text',
+                    WebkitBackgroundClip: 'text',
+                    color: 'transparent',
+                }}
+            >
                 Поиск продуктов
             </Typography>
+            <Typography variant="body1" color="text.secondary">
+                Найдите продукты через внешний API
+            </Typography>
+        </Box>
+    );
 
-            <Box sx={{ position: 'relative', mb: 3 }}>
+    const renderSearchInput = () => (
+        <Paper 
+            elevation={0}
+            sx={{ 
+                p: 3, 
+                mb: 4,
+                border: '1px solid',
+                borderColor: 'divider',
+                background: 'linear-gradient(135deg, rgba(124, 58, 237, 0.02), rgba(236, 72, 153, 0.02))',
+            }}
+        >
+            <Box sx={{ position: 'relative' }}>
                 <TextField
                     fullWidth
-                    placeholder="Введите название продукта..."
-                    value={searchTerm}
-                    onChange={handleSearchChange}
+                    placeholder="Введите название для поиска..."
+                    value={queryText}
+                    onChange={handleQueryChange}
                     InputProps={{
-                        startAdornment: <SearchIcon sx={{ mr: 1, color: 'text.secondary' }} />
+                        startAdornment: (
+                            <InputAdornment position="start">
+                                <SearchIcon sx={{ color: '#7c3aed' }} />
+                            </InputAdornment>
+                        ),
+                    }}
+                    sx={{
+                        '& .MuiOutlinedInput-root': {
+                            '&:hover fieldset': {
+                                borderColor: '#7c3aed',
+                            },
+                            '&.Mui-focused fieldset': {
+                                borderColor: '#7c3aed',
+                            },
+                        },
                     }}
                 />
-                {loading && (
+                {isSearching && (
                     <CircularProgress 
-                        size={24} 
+                        size={24}
                         sx={{ 
                             position: 'absolute', 
-                            right: 10, 
+                            right: 16, 
                             top: '50%', 
-                            transform: 'translateY(-50%)' 
+                            transform: 'translateY(-50%)',
+                            color: '#7c3aed',
                         }} 
                     />
                 )}
             </Box>
+        </Paper>
+    );
 
-            {error && (
-                <Alert severity="error" sx={{ mb: 2 }}>
-                    Ошибка: {error}
+    const renderProductCard = (product) => (
+        <Card 
+            key={product.id}
+            elevation={0}
+            sx={{ 
+                flex: '0 1 calc(25% - 18px)',
+                minWidth: 280,
+                maxWidth: 320,
+                display: 'flex',
+                flexDirection: 'column',
+                border: '1px solid',
+                borderColor: 'divider',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                    transform: 'translateY(-6px)',
+                    boxShadow: '0 20px 40px rgba(124, 58, 237, 0.15)',
+                    borderColor: '#7c3aed',
+                },
+                '@media (max-width: 1200px)': {
+                    flex: '0 1 calc(33.333% - 16px)',
+                },
+                '@media (max-width: 900px)': {
+                    flex: '0 1 calc(50% - 12px)',
+                },
+                '@media (max-width: 600px)': {
+                    flex: '0 1 100%',
+                    maxWidth: 'none'
+                }
+            }}
+        >
+            <Box sx={{ position: 'relative', paddingTop: '75%', bgcolor: '#faf5ff' }}>
+                <CardMedia
+                    component="img"
+                    image={product.thumbnail}
+                    alt={product.title}
+                    sx={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'contain',
+                        p: 2
+                    }}
+                />
+            </Box>
+            
+            <CardContent sx={{ flexGrow: 1 }}>
+                <Typography variant="h6" gutterBottom noWrap sx={{ fontWeight: 600 }}>
+                    {product.title}
+                </Typography>
+                
+                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2 }}>
+                    <Chip 
+                        label={`$${product.price}`} 
+                        size="small"
+                        sx={{ 
+                            bgcolor: 'rgba(124, 58, 237, 0.1)',
+                            color: '#7c3aed',
+                            fontWeight: 600,
+                        }}
+                    />
+                    <Chip 
+                        label={product.category} 
+                        size="small"
+                        sx={{
+                            bgcolor: 'rgba(236, 72, 153, 0.1)',
+                            color: '#ec4899',
+                        }}
+                    />
+                </Box>
+                
+                <Typography 
+                    variant="body2" 
+                    color="text.secondary"
+                    sx={{
+                        display: '-webkit-box',
+                        WebkitLineClamp: 3,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                        minHeight: 60,
+                    }}
+                >
+                    {product.description}
+                </Typography>
+            </CardContent>
+        </Card>
+    );
+
+    const renderResults = () => {
+        if (productList.length === 0) {
+            if (queryText.trim() && !isSearching) {
+                return (
+                    <Paper 
+                        elevation={0}
+                        sx={{ 
+                            p: 4, 
+                            textAlign: 'center',
+                            border: '1px solid',
+                            borderColor: 'divider',
+                        }}
+                    >
+                        <Typography variant="h6" color="text.secondary">
+                            🔍 Ничего не найдено
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                            Попробуйте изменить поисковый запрос
+                        </Typography>
+                    </Paper>
+                );
+            }
+            return null;
+        }
+
+        return (
+            <>
+                <Typography 
+                    variant="h6" 
+                    sx={{ 
+                        mb: 3,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1,
+                    }}
+                >
+                    <span>Найдено:</span>
+                    <Chip 
+                        label={productList.length} 
+                        size="small"
+                        sx={{ 
+                            bgcolor: 'rgba(124, 58, 237, 0.1)',
+                            color: '#7c3aed',
+                            fontWeight: 600,
+                        }}
+                    />
+                </Typography>
+                
+                <Box 
+                    sx={{ 
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        gap: 3,
+                        justifyContent: 'center'
+                    }}
+                >
+                    {productList.map(renderProductCard)}
+                </Box>
+            </>
+        );
+    };
+
+    return (
+        <Container maxWidth="lg" sx={{ py: 4 }}>
+            {renderSearchHeader()}
+            {renderSearchInput()}
+
+            {searchError && (
+                <Alert 
+                    severity="error" 
+                    sx={{ 
+                        mb: 3,
+                        borderRadius: 2,
+                    }}
+                >
+                    {searchError}
                 </Alert>
             )}
 
-            {products.length > 0 ? (
-                <>
-                    <Typography variant="h6" gutterBottom>
-                        Найдено продуктов: {products.length}
-                    </Typography>
-                    
-                    {/* Используем flex вместо Grid для лучшего контроля */}
-                    <Box 
-                        sx={{ 
-                            display: 'flex',
-                            flexWrap: 'wrap',
-                            gap: 3,
-                            justifyContent: 'center'
-                        }}
-                    >
-                        {products.map((product) => (
-                            <Card 
-                                key={product.id}
-                                sx={{ 
-                                    flex: '0 1 calc(25% - 18px)',
-                                    minWidth: 280,
-                                    maxWidth: 320,
-                                    display: 'flex',
-                                    flexDirection: 'column',
-                                    transition: 'transform 0.2s',
-                                    '&:hover': {
-                                        transform: 'translateY(-4px)',
-                                    },
-                                    // Адаптивность
-                                    '@media (max-width: 1200px)': {
-                                        flex: '0 1 calc(33.333% - 16px)',
-                                    },
-                                    '@media (max-width: 900px)': {
-                                        flex: '0 1 calc(50% - 12px)',
-                                    },
-                                    '@media (max-width: 600px)': {
-                                        flex: '0 1 100%',
-                                        maxWidth: 'none'
-                                    }
-                                }}
-                            >
-                                {/* Картинка с фиксированными пропорциями */}
-                                <Box sx={{ position: 'relative', paddingTop: '75%' }}>
-                                    <CardMedia
-                                        component="img"
-                                        image={product.thumbnail}
-                                        alt={product.title}
-                                        sx={{
-                                            position: 'absolute',
-                                            top: 0,
-                                            left: 0,
-                                            width: '100%',
-                                            height: '100%',
-                                            objectFit: 'contain', // Меняем на contain чтобы не обрезать
-                                            backgroundColor: '#f5f5f5',
-                                            p: 1
-                                        }}
-                                    />
-                                </Box>
-                                
-                                <CardContent sx={{ flexGrow: 1 }}>
-                                    <Typography variant="h6" gutterBottom noWrap>
-                                        {product.title}
-                                    </Typography>
-                                    
-                                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 1 }}>
-                                        <Chip 
-                                            label={`$${product.price}`} 
-                                            color="primary" 
-                                            size="small" 
-                                        />
-                                        <Chip 
-                                            label={product.category} 
-                                            variant="outlined" 
-                                            size="small" 
-                                        />
-                                    </Box>
-                                    
-                                    <Typography 
-                                        variant="body2" 
-                                        color="text.secondary"
-                                        sx={{
-                                            display: '-webkit-box',
-                                            WebkitLineClamp: 3,
-                                            WebkitBoxOrient: 'vertical',
-                                            overflow: 'hidden',
-                                            minHeight: '60px'
-                                        }}
-                                    >
-                                        {product.description}
-                                    </Typography>
-                                </CardContent>
-                            </Card>
-                        ))}
-                    </Box>
-                </>
-            ) : (
-                searchTerm.trim() && !loading && (
-                    <Typography variant="body1" color="text.secondary" align="center">
-                        Продукты не найдены
-                    </Typography>
-                )
-            )}
+            {renderResults()}
         </Container>
     );
 }

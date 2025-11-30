@@ -1,7 +1,8 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import useLocalStorage from './useLocalStorage';
 
-const initialTechnologies = [
+// Начальный набор данных
+const defaultDataset = [
     { 
         id: 1, 
         title: 'HTML CSS', 
@@ -52,67 +53,74 @@ const initialTechnologies = [
     }
 ];
 
-function useTechnologies() {
-    const [technologies, setTechnologies] = useLocalStorage('technologies', initialTechnologies);
+// Порядок статусов для циклического переключения
+const STATUS_SEQUENCE = ['not-started', 'in-progress', 'completed'];
 
-    const updateStatus = useCallback((techId, newStatus) => {
-        setTechnologies(prev =>
-            prev.map(tech =>
-                tech.id === techId ? { ...tech, status: newStatus } : tech
+function useTechnologies() {
+    const [dataCollection, persistData] = useLocalStorage('technologies', defaultDataset);
+
+    // Изменение статуса записи
+    const modifyItemStatus = useCallback((itemId, newStatusValue) => {
+        persistData(currentData =>
+            currentData.map(entry =>
+                entry.id === itemId ? { ...entry, status: newStatusValue } : entry
             )
         );
-    }, [setTechnologies]);
+    }, [persistData]);
 
-    // 🔄 Новая функция для циклического изменения статуса
-    const cycleStatus = useCallback((techId) => {
-        setTechnologies(prev =>
-            prev.map(tech => {
-                if (tech.id === techId) {
-                    const statusOrder = ['not-started', 'in-progress', 'completed'];
-                    const currentIndex = statusOrder.indexOf(tech.status);
-                    const nextIndex = (currentIndex + 1) % statusOrder.length;
-                    return { ...tech, status: statusOrder[nextIndex] };
+    // Циклическое переключение статуса
+    const rotateItemStatus = useCallback((itemId) => {
+        persistData(currentData =>
+            currentData.map(entry => {
+                if (entry.id === itemId) {
+                    const currentPosition = STATUS_SEQUENCE.indexOf(entry.status);
+                    const nextPosition = (currentPosition + 1) % STATUS_SEQUENCE.length;
+                    return { ...entry, status: STATUS_SEQUENCE[nextPosition] };
                 }
-                return tech;
+                return entry;
             })
         );
-    }, [setTechnologies]);
+    }, [persistData]);
 
-    const updateNotes = useCallback((techId, newNotes) => {
-        setTechnologies(prev =>
-            prev.map(tech =>
-                tech.id === techId ? { ...tech, notes: newNotes } : tech
+    // Обновление заметок
+    const modifyItemNotes = useCallback((itemId, notesContent) => {
+        persistData(currentData =>
+            currentData.map(entry =>
+                entry.id === itemId ? { ...entry, notes: notesContent } : entry
             )
         );
-    }, [setTechnologies]);
+    }, [persistData]);
 
-    const markAllCompleted = useCallback(() => {
-        setTechnologies(prev =>
-            prev.map(tech => ({ ...tech, status: 'completed' }))
+    // Пометить все как завершённые
+    const completeAllItems = useCallback(() => {
+        persistData(currentData =>
+            currentData.map(entry => ({ ...entry, status: 'completed' }))
         );
-    }, [setTechnologies]);
+    }, [persistData]);
 
-    const resetAllStatuses = useCallback(() => {
-        setTechnologies(prev =>
-            prev.map(tech => ({ ...tech, status: 'not-started' }))
+    // Сброс всех статусов
+    const resetAllItemStatuses = useCallback(() => {
+        persistData(currentData =>
+            currentData.map(entry => ({ ...entry, status: 'not-started' }))
         );
-    }, [setTechnologies]);
+    }, [persistData]);
 
-    const calculateProgress = useCallback(() => {
-        if (technologies.length === 0) return 0;
-        const completed = technologies.filter(tech => tech.status === 'completed').length;
-        return Math.round((completed / technologies.length) * 100);
-    }, [technologies]);
+    // Вычисление прогресса
+    const progressPercentage = useMemo(() => {
+        if (dataCollection.length === 0) return 0;
+        const completedCount = dataCollection.filter(entry => entry.status === 'completed').length;
+        return Math.round((completedCount / dataCollection.length) * 100);
+    }, [dataCollection]);
 
     return {
-        technologies,
-        setTechnologies,
-        updateStatus,
-        cycleStatus, // 🔄 Экспортируем новую функцию
-        updateNotes,
-        markAllCompleted,
-        resetAllStatuses,
-        progress: calculateProgress()
+        technologies: dataCollection,
+        setTechnologies: persistData,
+        updateStatus: modifyItemStatus,
+        cycleStatus: rotateItemStatus,
+        updateNotes: modifyItemNotes,
+        markAllCompleted: completeAllItems,
+        resetAllStatuses: resetAllItemStatuses,
+        progress: progressPercentage
     };
 }
 
