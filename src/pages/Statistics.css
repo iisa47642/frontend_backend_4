@@ -1,0 +1,79 @@
+.page {
+    padding: 20px;
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.stats-cards {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.card {
+    background: white;
+    padding: 16px;
+    border-radius: 8px;
+    box-shadow: 0 6px 18px rgba(14, 20, 30, 0.06);
+    flex: 1;
+}
+
+.big-progress {
+    font-size: 32px;
+    font-weight: 700;
+    margin-top: 8px;
+    color: #0ea5a4;
+}
+
+.big-progress.small {
+    font-size: 24px;
+    color: #334155;
+}
+
+.bars {
+    margin-top: 8px;
+}
+
+.stat-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 12px 0;
+}
+
+.label {
+    width: 180px;
+    color: #334155;
+}
+
+.bar {
+    flex: 1;
+    height: 16px;
+    background: #f1f5f9;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.bar-fill {
+    height: 100%;
+    border-radius: 8px 0 0 8px;
+    transition: width .4s ease;
+}
+
+.bar-fill.completed {
+    background: #4caf50;
+}
+
+.bar-fill.in-progress {
+    background: #f59e0b;
+}
+
+.bar-fill.not-started {
+    background: #94a3b8;
+}
+
+.pct {
+    width: 50px;
+    text-align: right;
+    color: #475569;
+}

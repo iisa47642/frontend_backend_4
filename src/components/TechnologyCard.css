@@ -1,0 +1,134 @@
+.technology-card {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    margin: 15px 0;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    border-left: 6px solid #ccc;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.technology-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Стили статусов */
+.technology-card.status-completed {
+    border-left-color: #4caf50;
+    background: linear-gradient(135deg, #e8f5e9 0%, #ffffff 100%);
+}
+
+.technology-card.status-in-progress {
+    border-left-color: #ff9800;
+    background: linear-gradient(135deg, #fff3e0 0%, #ffffff 100%);
+}
+
+.technology-card.status-not-started {
+    border-left-color: #f44336;
+    background: linear-gradient(135deg, #ffebee 0%, #ffffff 100%);
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+}
+
+.card-title {
+    margin: 0;
+    color: #333;
+    font-size: 1.3em;
+    flex: 1;
+}
+
+.status-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8em;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status-badge.status-completed {
+    background-color: #4caf50;
+    color: white;
+}
+
+.status-badge.status-in-progress {
+    background-color: #ff9800;
+    color: white;
+}
+
+.status-badge.status-not-started {
+    background-color: #f44336;
+    color: white;
+}
+
+.card-description {
+    color: #666;
+    margin: 0 0 15px 0;
+    line-height: 1.5;
+}
+
+.notes-section {
+    margin: 15px 0;
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.03);
+    border-radius: 8px;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.notes-section h4 {
+    margin: 0 0 10px 0;
+    font-size: 0.9em;
+    color: #666;
+    font-weight: 600;
+}
+
+.notes-textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-family: inherit;
+    font-size: 0.9em;
+    resize: vertical;
+    min-height: 60px;
+    max-height: 120px;
+    box-sizing: border-box; /* Важно! чтобы padding не увеличивал ширину */
+}
+
+.notes-textarea:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+}
+
+.notes-hint {
+    font-size: 0.8em;
+    color: #999;
+    margin-top: 5px;
+    font-style: italic;
+}
+
+.card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.progress-indicator {
+    font-size: 1.2em;
+}
+
+.click-hint {
+    font-size: 0.8em;
+    color: #999;
+    font-style: italic;
+}

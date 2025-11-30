@@ -1,0 +1,120 @@
+.roadmap-importer {
+    background: var(--card-bg);
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    margin-bottom: 20px;
+    border-left: 4px solid #0ea5a4;
+}
+
+.roadmap-importer h3 {
+    margin: 0 0 15px 0;
+    color: #1f2937;
+    font-size: 1.2em;
+}
+
+.import-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.api-url-input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 6px;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+.api-url-input:focus {
+    outline: none;
+    border-color: #0ea5a4;
+    box-shadow: 0 0 0 3px rgba(14, 165, 164, 0.1);
+}
+
+.import-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.import-button, .example-button, .clear-button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.import-button {
+    background: #0ea5a4;
+    color: white;
+}
+
+.import-button:hover:not(:disabled) {
+    background: #089191;
+}
+
+.import-button:disabled {
+    background: #9ca3af;
+    cursor: not-allowed;
+}
+
+.example-button {
+    background: #f3f4f6;
+    color: #374151;
+    border: 1px solid #d1d5db;
+}
+
+.example-button:hover:not(:disabled) {
+    background: #e5e7eb;
+}
+
+.clear-button {
+    background: #ef4444;
+    color: white;
+}
+
+.clear-button:hover {
+    background: #dc2626;
+}
+
+.error-message {
+    background: #fef2f2;
+    color: #dc2626;
+    padding: 10px 12px;
+    border-radius: 6px;
+    margin-top: 10px;
+    border-left: 3px solid #dc2626;
+}
+
+.import-info {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #e5e7eb;
+}
+
+.import-info p {
+    margin: 5px 0;
+    color: #6b7280;
+    font-size: 14px;
+}
+
+.import-info strong {
+    color: #374151;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .import-actions {
+        flex-direction: column;
+    }
+    
+    .import-button, .example-button, .clear-button {
+        width: 100%;
+    }
+}

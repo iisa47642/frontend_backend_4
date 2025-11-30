@@ -1,0 +1,105 @@
+/* src/components/BulkStatusEditor.css */
+.bulk-editor {
+    margin-top: 30px;
+    padding: 20px;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    background: #fafafa;
+}
+
+.bulk-editor h3 {
+    margin-top: 0;
+    color: #2c3e50;
+}
+
+.bulk-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 20px;
+    align-items: center;
+}
+
+.status-select-group {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.status-select-group label {
+    font-weight: 600;
+}
+
+/* Стилизация select */
+.status-select-group select {
+    padding: 6px 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background: white;
+    font-size: 14px;
+    min-width: 140px;
+}
+
+.tech-checkbox-list {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid #ddd;
+    padding: 10px;
+    border-radius: 4px;
+    background: white;
+}
+
+/* Скрываем настоящий чекбокс */
+.tech-checkbox-item input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.tech-checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+}
+
+/* Кастомный "чекбокс" — кружок */
+
+
+.tech-checkbox-item input[type="checkbox"]:checked + span.tech-title {
+    color: #27ae60;
+    font-weight: 600;
+}
+
+.tech-checkbox-item input[type="checkbox"]:checked::before {
+    background: #2ecc71;
+    border-color: #27ae60;
+}
+
+.tech-checkbox-item input[type="checkbox"]:checked::after {
+    content: '✓';
+    position: absolute;
+    left: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.tech-title {
+    flex: 1;
+    font-weight: 500;
+    color: #2c3e50;
+}
+
+.tech-current-status {
+    color: #7f8c8d;
+    font-size: 14px;
+    background: #f8f9fa;
+    padding: 2px 6px;
+    border-radius: 4px;
+}
